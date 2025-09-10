@@ -1,74 +1,208 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, ScrollView, Modal, Animated, Platform, Text, ImageSourcePropType } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Story } from '@/components/Story';
+import { EventCard } from '@/components/EventCard';
+import CameraView from '@/components/CameraView';
+import { router } from 'expo-router';
+import { useSafeToast } from '@/hooks/useErrorHandler';
+import { ComponentErrorBoundary, ListItemErrorBoundary } from '@/components/ErrorBoundaries';
+import { SkeletonHeader } from '@/components/SkeletonComponents';
+import { SkeletonStory, SkeletonCard } from '@/components/LoadingStates';
+import { useSimulatedLoading } from '@/hooks/useSkeletonLoader';
+import { ScreenTransition } from '@/components/PageTransition';
+import { smoothNavigation } from '@/utils/navigationTransitions';
+import { useTheme, useThemeColors } from '@/contexts/ThemeContext';
+import { DynamicHeader } from '@/components/DynamicHeader';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchEvents } from '@/store/slices/eventsSlice';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const SAMPLE_STORIES = [
+  { id: '1', title: 'Pub', image: require('@/assets/images/react-logo.png'), hasNewContent: true },
+  { id: '2', title: 'Bar', image: require('@/assets/images/extra.png') },
+  { id: '3', title: 'Venue', image: require('@/assets/images/splash-icon.png'), hasNewContent: true },
+  { id: '4', title: 'Club', image: require('@/assets/images/adaptive-icon.png') },
+];
 
 export default function HomeScreen() {
+  const [showCamera, setShowCamera] = useState(false);
+  const { showToast } = useSafeToast();
+  const dispatch = useAppDispatch();
+  const { events, loading, error } = useAppSelector((state) => state.events);
+  const { theme } = useTheme();
+  const colors = useThemeColors();
+  
+  const displayEvents = (events && events.length > 0
+    ? events
+    : [
+        {
+          id: 'sample-1',
+          title: 'Sample Event',
+          venue: 'Downtown Venue',
+          time: 'Tonight 8:00 PM',
+          image: require('@/assets/images/extra.png') as ImageSourcePropType,
+          price: 19.99,
+        },
+        {
+          id: 'sample-2',
+          title: 'Another Event',
+          venue: 'City Club',
+          time: 'Fri 9:30 PM',
+          image: require('@/assets/images/adaptive-icon.png') as ImageSourcePropType,
+          price: 14.99,
+        },
+        {
+          id: 'sample-3',
+          title: 'Open Mic Night',
+          venue: 'Studio Lounge',
+          time: 'Sat 7:00 PM',
+          image: require('@/assets/images/party1.jpg') as ImageSourcePropType,
+          price: 9.99,
+        },
+        {
+          id: 'sample-4',
+          title: 'Live DJ',
+          venue: 'Neon Bar',
+          time: 'Sun 10:00 PM',
+          image: require('@/assets/images/react-logo.png') as ImageSourcePropType,
+          price: 12.0,
+        },
+        {
+          id: 'sample-5',
+          title: 'Acoustic Evening',
+          venue: 'Riverside Cafe',
+          time: 'Mon 6:30 PM',
+          image: require('@/assets/images/PHOTO.png') as ImageSourcePropType,
+          price: 7.5,
+        },
+        {
+          id: 'sample-6',
+          title: 'Comedy Night',
+          venue: 'Brick House',
+          time: 'Tue 8:30 PM',
+          image: require('@/assets/images/partial-react-logo.png') as ImageSourcePropType,
+          price: 11.0,
+        },
+      ]
+  ).map((e: any) => ({
+    id: e.id,
+    title: e.title ?? e.name ?? 'Untitled',
+    venue: e.venue ?? e.location ?? 'Unknown venue',
+    time: e.time ?? e.date ?? '',
+    image: e.image ?? require('@/assets/images/react-logo.png'),
+    price: typeof e.price === 'number' ? e.price : 0,
+  }));
+  
+  // Animation for header hide/show
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    dispatch(fetchEvents());
+  }, [dispatch]);
+
+  const handleStoryPress = (id: string) => {
+    console.log('Story pressed:', id);
+    if (id !== 'create') {
+      const story = SAMPLE_STORIES.find(s => s.id === id);
+      if (story) {
+        alert(`Viewing story: ${story.title}`);
+      }
+    } else {
+      setShowCamera(true);
+    }
+  };
+
+  const handlePublishStory = (mediaUri: string) => {
+    console.log('Published story with media:', mediaUri);
+    setShowCamera(false);
+    alert(`Story published with media: ${mediaUri}`);
+  };
+
+  const handleShare = (id: string) => {
+    console.log('Share pressed:', id);
+  };
+
+  const handleDirections = (id: string) => {
+    console.log('Directions pressed:', id);
+  };
+
+  const handleSave = (id: string) => {
+    console.log('Save pressed:', id);
+  };
+
+  const handleBook = (id: string) => {
+    console.log('Book pressed:', id);
+    showToast('Event booked successfully! 🎉', 'success');
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <DynamicHeader scrollY={scrollY} />
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 100 }}>
+          <SkeletonStory />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Render content even if events error, showing a friendly banner instead of blank screen
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScreenTransition transitionType="slideUp" duration={300}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <DynamicHeader scrollY={scrollY} />
+        
+        <Animated.ScrollView 
+          style={styles.content}
+          contentContainerStyle={{ paddingTop: 100 }}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        >
+          <ComponentErrorBoundary componentName="Story">
+            <Story stories={SAMPLE_STORIES} onStoryPress={handleStoryPress} />
+          </ComponentErrorBoundary>
+          
+          {displayEvents.map((event: any) => (
+            <ListItemErrorBoundary key={event.id} itemId={event.id}>
+              <EventCard
+                event={event}
+                onShare={handleShare}
+                onDirections={handleDirections}
+                onSave={handleSave}
+                onBook={handleBook}
+                onPress={(id) => router.push({ pathname: '/event-details', params: { id } })}
+              />
+            </ListItemErrorBoundary>
+          ))}
+        </Animated.ScrollView>
+
+        <Modal
+          visible={showCamera}
+          animationType="slide"
+          onRequestClose={() => setShowCamera(false)}
+        >
+          <CameraView 
+            onClose={() => setShowCamera(false)} 
+          />
+        </Modal>
+      </SafeAreaView>
+    </ScreenTransition>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  content: {
+    flex: 1,
   },
 });
