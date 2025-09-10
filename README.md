@@ -1,50 +1,68 @@
-# Welcome to your Expo app 👋
+# LitPass
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Interact with every major restaurant and more in the city of Milan, Italy.
 
-## Get started
+## Overview
 
-1. Install dependencies
+LitPass is a cross-platform app built with [Expo](https://expo.dev/) and TypeScript, designed to streamline interactions with restaurants and services across Milan.
 
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (version 16.x or later recommended)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+
+## Getting Started
+
+Follow these steps to run the app locally:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Demiserular/LitPass.git
+   cd LitPass
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
-
-2. Start the app
-
+   _or, if you use yarn:_
    ```bash
-    npx expo start
+   yarn install
    ```
 
-In the output, you'll find options to open the app in a
+3. **Start the Expo development server**
+   ```bash
+   npx expo start
+   ```
+   _or, if you installed Expo CLI globally:_
+   ```bash
+   expo start
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. **Run the app on your device or emulator**
+   - **On your phone:** Install the [Expo Go](https://expo.dev/client) app from the App Store or Google Play. Scan the QR code displayed in your terminal or browser after running the start command.
+   - **On an emulator/simulator:** Press `i` to open in iOS Simulator or `a` to open in Android Emulator (when available).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
+- Main language: **TypeScript**
+- Framework: **Expo (React Native)**
+- Default branch: `master`
 
-When you're ready, run:
+## Scripts
 
-```bash
-npm run reset-project
-```
+- `expo start` – Start the Expo development server
+- `expo build` – Build the app for production (see [Expo docs](https://docs.expo.dev/))
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Contributing
 
-## Learn more
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
-To learn more about developing your project with Expo, look at the following resources:
+## License
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+This project does not currently specify a license.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+If you encounter any issues or have questions, feel free to open an issue in the [GitHub repository](https://github.com/Demiserular/LitPass).
