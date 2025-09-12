@@ -73,8 +73,8 @@ function AppContent() {
               options={{
                 animation: Platform.select({
                   ios: 'fade',
-                  android: 'fade',
-                  default: 'fade'
+                  android:'none',
+                  default: 'none'
                 })
               }}
             />

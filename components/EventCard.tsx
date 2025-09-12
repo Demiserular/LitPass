@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Image, Text, TouchableOpacity, Modal } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal } from 'react-native';
+import { Image } from 'expo-image';
 import { Share2, MapPin, Bookmark } from 'lucide-react-native';
 import { VenueMapView } from './MapView';
 import { PaymentView } from './PaymentView';
@@ -34,7 +35,7 @@ export function EventCard({ event, onShare, onDirections, onSave, onBook, onPres
     ]}>
       <TouchableOpacity activeOpacity={0.9} onPress={() => onPress && onPress(event.id)}>
         {event.image ? (
-          <Image source={typeof event.image === 'string' ? { uri: event.image } : event.image} style={styles.image} />
+          <Image source={typeof event.image === 'string' ? { uri: event.image } : event.image} style={styles.image} transition={300} />
         ) : null}
       </TouchableOpacity>
       

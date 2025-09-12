@@ -4,6 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Story } from '@/components/Story';
 import { EventCard } from '@/components/EventCard';
 import CameraView from '@/components/CameraView';
+import EnhancedCameraView from '@/components/EnhancedCameraView';
+import { PostModal } from '@/components/PostModal';
+import { PostCreationScreen } from '@/components/PostCreationScreen';
+import { usePosts } from '@/hooks/usePosts';
 import { router } from 'expo-router';
 import { useSafeToast } from '@/hooks/useErrorHandler';
 import { ComponentErrorBoundary, ListItemErrorBoundary } from '@/components/ErrorBoundaries';
@@ -26,7 +30,16 @@ const SAMPLE_STORIES = [
 
 export default function HomeScreen() {
   const [showCamera, setShowCamera] = useState(false);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [showPostCreation, setShowPostCreation] = useState(false);
+  const [cameraMode, setCameraMode] = useState<'photo' | 'video'>('photo');
+  const [capturedMedia, setCapturedMedia] = useState<{
+    uri: string;
+    type: 'photo' | 'video';
+  } | null>(null);
+  
   const { showToast } = useSafeToast();
+  const { createPost, isUploading } = usePosts();
   const dispatch = useAppDispatch();
   const { events, loading, error } = useAppSelector((state) => state.events);
   const { theme } = useTheme();
@@ -118,6 +131,64 @@ export default function HomeScreen() {
     alert(`Story published with media: ${mediaUri}`);
   };
 
+  const handlePostPress = () => {
+    setShowPostModal(true);
+  };
+
+  const handleCameraPress = () => {
+    setCameraMode('photo');
+    setShowCamera(true);
+  };
+
+  const handleVideoPress = () => {
+    setCameraMode('video');
+    setShowCamera(true);
+  };
+
+  const handleGalleryPress = () => {
+    showToast('Gallery selection completed! 📸', 'success');
+  };
+
+  const handleMediaCapture = (media: { uri: string; type: 'photo' | 'video' }) => {
+    console.log('Media captured:', media);
+    setCapturedMedia(media);
+    setShowCamera(false);
+    setShowPostCreation(true);
+  };
+
+  const handleCreatePost = async (postData: {
+    caption: string;
+    tags: string[];
+    isPublic: boolean;
+    saveToGallery: boolean;
+  }) => {
+    if (!capturedMedia) return;
+
+    try {
+      await createPost(capturedMedia.uri, capturedMedia.type, {
+        caption: postData.caption,
+        tags: postData.tags,
+        isPublic: postData.isPublic,
+        saveToGallery: postData.saveToGallery,
+      });
+
+      setShowPostCreation(false);
+      setCapturedMedia(null);
+      showToast(
+        `${capturedMedia.type === 'photo' ? 'Photo' : 'Video'} posted successfully! 🎉`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error creating post:', error);
+      showToast('Failed to create post. Please try again.', 'error');
+    }
+  };
+
+  const handleClosePostCreation = () => {
+    setShowPostCreation(false);
+    setCapturedMedia(null);
+  };
+
   const handleShare = (id: string) => {
     console.log('Share pressed:', id);
   };
@@ -138,7 +209,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-        <DynamicHeader scrollY={scrollY} />
+        <DynamicHeader scrollY={scrollY} onPostPress={handlePostPress} />
         <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 100 }}>
           <SkeletonStory />
           <SkeletonCard />
@@ -154,7 +225,7 @@ export default function HomeScreen() {
   return (
     <ScreenTransition transitionType="slideUp" duration={300}>
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-        <DynamicHeader scrollY={scrollY} />
+        <DynamicHeader scrollY={scrollY} onPostPress={handlePostPress} />
         
         <Animated.ScrollView 
           style={styles.content}
@@ -184,14 +255,42 @@ export default function HomeScreen() {
           ))}
         </Animated.ScrollView>
 
+        {/* Post Modal */}
+        <PostModal
+          visible={showPostModal}
+          onClose={() => setShowPostModal(false)}
+          onCameraPress={handleCameraPress}
+          onVideoPress={handleVideoPress}
+          onGalleryPress={handleGalleryPress}
+        />
+
+        {/* Enhanced Camera Modal */}
         <Modal
           visible={showCamera}
           animationType="slide"
           onRequestClose={() => setShowCamera(false)}
         >
-          <CameraView 
-            onClose={() => setShowCamera(false)} 
+          <EnhancedCameraView 
+            mode={cameraMode}
+            onClose={() => setShowCamera(false)}
+            onCapture={handleMediaCapture}
           />
+        </Modal>
+
+        {/* Post Creation Modal */}
+        <Modal
+          visible={showPostCreation}
+          animationType="slide"
+          onRequestClose={handleClosePostCreation}
+        >
+          {capturedMedia && (
+            <PostCreationScreen
+              mediaUri={capturedMedia.uri}
+              mediaType={capturedMedia.type}
+              onClose={handleClosePostCreation}
+              onPost={handleCreatePost}
+            />
+          )}
         </Modal>
       </SafeAreaView>
     </ScreenTransition>

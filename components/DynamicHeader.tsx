@@ -11,17 +11,18 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { Sun, Moon } from 'lucide-react-native';
+import { Sun, Moon, Plus } from 'lucide-react-native';
 import { useTheme, useThemeColors } from '../contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
 interface DynamicHeaderProps {
   scrollY: Animated.Value;
+  onPostPress?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-export function DynamicHeader({ scrollY }: DynamicHeaderProps) {
+export function DynamicHeader({ scrollY, onPostPress }: DynamicHeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -80,6 +81,13 @@ export function DynamicHeader({ scrollY }: DynamicHeaderProps) {
     }
     startPulse();
     toggleTheme();
+  };
+
+  const handlePostPress = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPostPress?.();
   };
 
   // Dynamic Island aware styling
@@ -146,32 +154,49 @@ export function DynamicHeader({ scrollY }: DynamicHeaderProps) {
           LitPass
         </Text>
 
-        {/* Theme Toggle */}
-        <TouchableOpacity
-          style={[
-            styles.themeToggle,
-            {
-              backgroundColor: theme === 'dark' ? colors.tertiaryBackground : colors.secondaryBackground,
-            },
-          ]}
-          onPress={handleThemeToggle}
-          activeOpacity={0.8}
-        >
-          <Animated.View
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          {/* Post Button */}
+          <TouchableOpacity
             style={[
-              styles.toggleContent,
+              styles.actionButton,
               {
-                transform: [{ scale: pulseAnim }],
+                backgroundColor: theme === 'dark' ? colors.tertiaryBackground : colors.secondaryBackground,
               },
             ]}
+            onPress={handlePostPress}
+            activeOpacity={0.8}
           >
-            {theme === 'dark' ? (
-              <Sun size={20} color="#FFD700" strokeWidth={2} />
-            ) : (
-              <Moon size={20} color="#4A90E2" strokeWidth={2} />
-            )}
-          </Animated.View>
-        </TouchableOpacity>
+            <Plus size={20} color={colors.accent} strokeWidth={2} />
+          </TouchableOpacity>
+
+          {/* Theme Toggle */}
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: theme === 'dark' ? colors.tertiaryBackground : colors.secondaryBackground,
+              },
+            ]}
+            onPress={handleThemeToggle}
+            activeOpacity={0.8}
+          >
+            <Animated.View
+              style={[
+                styles.toggleContent,
+                {
+                  transform: [{ scale: pulseAnim }],
+                },
+              ]}
+            >
+              {theme === 'dark' ? (
+                <Sun size={20} color="#FFD700" strokeWidth={2} />
+              ) : (
+                <Moon size={20} color="#4A90E2" strokeWidth={2} />
+              )}
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
       </View>
     </Animated.View>
   );
@@ -207,7 +232,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Platform.OS === 'ios' ? 12 : 8,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 24,
     minHeight: Platform.OS === 'ios' ? 48 : 44,
   },
   brandText: {
@@ -216,9 +241,16 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.1)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    marginLeft: Platform.OS === 'ios' ? 4 : 0,
+    marginLeft: Platform.OS === 'ios' ? 4 : 12,
+
   },
-  themeToggle: {
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginRight: Platform.OS === 'ios' ? 4 : 0,
+  },
+  actionButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -232,7 +264,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginRight: Platform.OS === 'ios' ? 4 : 0,
   },
   toggleContent: {
     justifyContent: 'center',

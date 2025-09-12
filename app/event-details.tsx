@@ -1,20 +1,20 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity, 
-  Share, 
-  Animated, 
-  Dimensions, 
-  Easing, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Share,
+  Animated,
+  Dimensions,
+  Easing,
   ActivityIndicator,
   SafeAreaView,
   Platform,
   Modal,
   StatusBar
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -52,7 +52,7 @@ const FALLBACK_EVENTS: Record<string, EventData> = {
     start_time: new Date().toISOString(),
     price: 19.99,
     description: 'Join us for an unforgettable night with live music, great food, and amazing vibes.',
-    image: 'https://example.com/sample-event.jpg',
+    image: require('@/assets/images/party1.jpg'),
     cover_image_url: 'https://example.com/sample-event-cover.jpg',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -91,12 +91,12 @@ export default function EventDetailsScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const colors = useThemeColors();
-  
+
   // Select event data from Redux store
   const event = useAppSelector(selectCurrentEvent);
   const loading = useAppSelector(state => state.events.loading);
   const error = useAppSelector(state => state.events.error);
-  
+
   const [isPaymentVisible, setIsPaymentVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -109,13 +109,13 @@ export default function EventDetailsScreen() {
     if (id) {
       dispatch(fetchEventById(id));
     }
-    
+
     // Cleanup function to clear current event when component unmounts
     return () => {
       dispatch(clearCurrentEvent());
     };
   }, [id, dispatch]);
-  
+
   // Use fallback data if event is not found
   const displayEvent: EventData = event ?? FALLBACK_EVENTS[id as string] ?? FALLBACK_EVENTS['sample-1'];
 
@@ -123,9 +123,9 @@ export default function EventDetailsScreen() {
     // Instagram-style vertical slide down
     Animated.timing(slideAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 100,
       useNativeDriver: true,
-      easing: Easing.inOut(Easing.ease)
+      easing: Easing.inOut(Easing.elastic(1))
     }).start(() => {
       router.back();
     });
@@ -161,7 +161,7 @@ export default function EventDetailsScreen() {
   // Set up the initial animation value when component mounts
   useEffect(() => {
     // Start from slightly below (Instagram-style)
-    slideAnim.setValue(0.1);
+    slideAnim.setValue(0);
     // Smooth fade in from bottom
     Animated.spring(slideAnim, {
       toValue: 0,
@@ -181,16 +181,18 @@ export default function EventDetailsScreen() {
             transform: [{
               translateY: slideAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 50],
+                outputRange: [0, 1],
                 extrapolate: 'clamp',
               })
             }],
             opacity: slideAnim.interpolate({
-              inputRange: [0, 0.5, 1],
-              outputRange: [1, 0.9, 0.7],
+              inputRange: [0, 1, 1],
+              outputRange: [1, 0.8, 0.9],
               extrapolate: 'clamp',
             }),
             flex: 1,
+
+            
           }
         ]}
       >
@@ -199,10 +201,10 @@ export default function EventDetailsScreen() {
             <View>
               <View style={styles.headerImageContainer}>
                 {displayEvent?.image ? (
-                  <Image 
-                    source={typeof displayEvent.image === 'string' 
-                      ? { uri: displayEvent.image } 
-                      : displayEvent.image} 
+                  <Image
+                    source={typeof displayEvent.image === 'string'
+                      ? { uri: displayEvent.image }
+                      : displayEvent.image}
                     style={styles.image}
                     resizeMode="cover"
                     onError={(error: any) => console.log('Image load error:', error.nativeEvent.error)}
@@ -214,7 +216,7 @@ export default function EventDetailsScreen() {
                 )}
                 <View style={[styles.headerOverlay, { backgroundColor: 'rgba(0,0,0,0.25)' }]} />
               </View>
-              
+
               <View style={styles.headerTopBar}>
                 <TouchableOpacity style={styles.headerActionsLeft} onPress={handleBack}>
                   <View style={[styles.iconCircle, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
@@ -224,9 +226,9 @@ export default function EventDetailsScreen() {
                 <View style={styles.headerActionsRight}>
                   <TouchableOpacity onPress={handleBookmark}>
                     <View style={[styles.iconCircle, { backgroundColor: isBookmarked ? '#007AFF' : 'rgba(0,0,0,0.6)' }]}>
-                      <Bookmark 
+                      <Bookmark
                         color="#fff"
-                        size={20} 
+                        size={20}
                         fill={isBookmarked ? '#fff' : 'transparent'}
                       />
                     </View>
@@ -238,7 +240,7 @@ export default function EventDetailsScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               <View style={styles.headerBottomInfo}>
                 <ThemedText style={styles.headerTitle}>{displayEvent?.title}</ThemedText>
                 <View style={styles.subRow}>
@@ -270,14 +272,14 @@ export default function EventDetailsScreen() {
             </ThemedView>
 
             <View style={styles.inlineActions}>
-              <TouchableOpacity 
-                style={[styles.inlineButton, { backgroundColor: colors.primary }]} 
+              <TouchableOpacity
+                style={[styles.inlineButton, { backgroundColor: colors.primary }]}
                 onPress={() => setShowPayment(true)}
               >
                 <ThemedText style={styles.inlineButtonText}>Book Now</ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.inlineButton, { backgroundColor: colors.tertiaryBackground }]} 
+              <TouchableOpacity
+                style={[styles.inlineButton, { backgroundColor: colors.tertiaryBackground }]}
                 onPress={() => setShowMap(true)}
               >
                 <ThemedText style={[styles.inlineButtonText, { color: colors.text }]}>
