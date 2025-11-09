@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 
-export type NavigationTransitionType = 
+export type NavigationTransitionType =
   | 'slide_from_right'
   | 'slide_from_left'
   | 'slide_from_bottom'
@@ -80,25 +80,21 @@ export const transitionPresets = {
 // Enhanced navigation functions with smooth transitions
 export const smoothNavigation = {
   // Navigate to a screen with custom transition
-  push: (href: import('expo-router').Href | string, config: TransitionConfig = transitionPresets.default) => {
-    router.push({
-      pathname: href,
-      params: {
-        _transition: config.animation,
-        _duration: config.duration?.toString(),
-      }
-    });
+  push: (href: import('expo-router').Href, config: TransitionConfig = transitionPresets.default) => {
+    if (typeof href === 'string') {
+      router.push(href as any);
+    } else {
+      router.push(href);
+    }
   },
 
   // Replace current screen
-  replace: (href: import('expo-router').Href | string, config: TransitionConfig = transitionPresets.default) => {
-    router.replace({
-      pathname: href,
-      params: {
-        _transition: config.animation,
-        _duration: config.duration?.toString(),
-      }
-    });
+  replace: (href: import('expo-router').Href, config: TransitionConfig = transitionPresets.default) => {
+    if (typeof href === 'string') {
+      router.replace(href as any);
+    } else {
+      router.replace(href);
+    }
   },
 
   // Navigate back with transition
@@ -107,40 +103,31 @@ export const smoothNavigation = {
   },
 
   // Navigate to modal
-  openModal: (href: import('expo-router').Href | string, config: TransitionConfig = transitionPresets.modal) => {
-    router.push({
-      pathname: href,
-      params: {
-        _transition: config.animation,
-        _duration: config.duration?.toString(),
-        _presentation: config.presentation,
-      }
-    });
+  openModal: (href: import('expo-router').Href, config: TransitionConfig = transitionPresets.modal) => {
+    if (typeof href === 'string') {
+      router.push(href as any);
+    } else {
+      router.push(href);
+    }
   },
 
   // Navigate to settings
   openSettings: () => {
-    smoothNavigation.openModal('/settings', transitionPresets.settings);
+    router.push('/settings' as any);
   },
 
   // Navigate to test screens
   openTestComponents: () => {
-    smoothNavigation.openModal('/test-components', transitionPresets.modal);
+    router.push('/test-components' as any);
   },
 
   openTestErrors: () => {
-    smoothNavigation.openModal('/test-errors', transitionPresets.modal);
+    router.push('/test-errors' as any);
   },
 
   // Tab navigation with smooth transitions
   switchTab: (tabName: string) => {
-    router.push({
-      pathname: `/(tabs)/${tabName}`,
-      params: {
-        _transition: transitionPresets.tab.animation,
-        _duration: transitionPresets.tab.duration?.toString(),
-      }
-    });
+    router.push(`/(tabs)/${tabName}` as any);
   },
 };
 
@@ -149,14 +136,14 @@ export function useNavigationTransition() {
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   const navigateWithTransition = React.useCallback((
-    href: string, 
+    href: string,
     config: TransitionConfig = transitionPresets.default
   ) => {
     setIsTransitioning(true);
-    
+
     // Start transition
-    smoothNavigation.push(href, config);
-    
+    router.push(href as any);
+
     // Reset transition state after animation completes
     setTimeout(() => {
       setIsTransitioning(false);
@@ -177,13 +164,13 @@ export const gestureConfigs = {
     gestureDirection: 'horizontal' as const,
     gestureResponseDistance: 50,
   },
-  
+
   modal: {
     gestureEnabled: true,
     gestureDirection: 'vertical' as const,
     gestureResponseDistance: 100,
   },
-  
+
   disabled: {
     gestureEnabled: false,
   },

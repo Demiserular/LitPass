@@ -151,7 +151,7 @@ export function DynamicHeader({ scrollY, onPostPress }: DynamicHeaderProps) {
             },
           ]}
         >
-          LitPass
+         LitPass
         </Text>
 
         {/* Action Buttons */}
@@ -192,7 +192,7 @@ export function DynamicHeader({ scrollY, onPostPress }: DynamicHeaderProps) {
               {theme === 'dark' ? (
                 <Sun size={20} color="#FFD700" strokeWidth={2} />
               ) : (
-                <Moon size={20} color="#4A90E2" strokeWidth={2} />
+                <Moon size={20} color="#0b0c0eff" strokeWidth={2} />
               )}
             </Animated.View>
           </TouchableOpacity>

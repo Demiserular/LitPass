@@ -7,6 +7,7 @@ import {
   Image,
   Platform,
   Animated,
+  Alert,
 } from 'react-native';
 import { CameraView as ExpoCameraView, Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,7 +37,7 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
   
   const colors = useThemeColors();
   const cameraRef = useRef<any>(null);
-  const recordingInterval = useRef<NodeJS.Timeout | null>(null);
+  const recordingInterval = useRef<any>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -100,16 +101,31 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
         }
       } else {
         if (isRecording) {
-          // Stop recording
-          cameraRef.current.stopRecording();
-          // The recording will complete and trigger the promise resolution
+          // Stop recording - but only if we've been recording for at least 1 second
+          if (recordingTime < 1) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            Alert.alert(
+              'Recording Too Short',
+              'Please record for at least 1 second before stopping.',
+              [{ text: 'OK' }]
+            );
+            return;
+          }
+          
+          try {
+            cameraRef.current.stopRecording();
+            // Note: stopRecording will cause the recordAsync promise to resolve
+          } catch (stopError) {
+            console.error('Error stopping recording:', stopError);
+            setIsRecording(false);
+          }
         } else {
           // Start recording
           setIsRecording(true);
           try {
             const video = await cameraRef.current.recordAsync({
-              quality: '720p',
               maxDuration: 60, // 60 seconds max
+              mute: false,
             });
             // Video recording completed (either by time limit or manual stop)
             setIsRecording(false);
@@ -119,9 +135,14 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
                 onCapture({ uri: video.uri, type: 'video' });
               }
             }
-          } catch (recordError) {
+          } catch (recordError: any) {
             console.error('Recording error:', recordError);
             setIsRecording(false);
+            
+            // Show user-friendly error message
+            if (recordError.message?.includes('stopped before any data')) {
+              console.warn('Recording was too short - please record for at least 1 second');
+            }
           }
         }
       }
@@ -209,7 +230,6 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
             style={styles.camera}
             facing={cameraType}
             ref={cameraRef}
-            mode={currentMode}
           />
           
           {/* Overlay positioned absolutely */}
@@ -225,6 +245,11 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
                   <Text style={styles.recordingTime}>
                     {formatTime(recordingTime)}
                   </Text>
+                  {recordingTime < 1 && (
+                    <Text style={styles.recordingHint}>
+                      Recording...
+                    </Text>
+                  )}
                 </View>
               )}
 
@@ -242,16 +267,20 @@ const EnhancedCameraView: React.FC<EnhancedCameraViewProps> = ({
                     styles.captureButton,
                     currentMode === 'video' && isRecording && {
                       transform: [{ scale: pulseAnim }],
-                      backgroundColor: '#FF4444',
+                      backgroundColor: recordingTime < 1 ? '#888' : '#FF4444',
                     },
                   ]}
                 >
                   <TouchableOpacity
                     style={styles.captureButtonInner}
                     onPress={handleCapture}
+                    disabled={currentMode === 'video' && isRecording && recordingTime < 1}
                   >
                     {currentMode === 'video' && isRecording ? (
-                      <View style={styles.stopIcon} />
+                      <View style={[
+                        styles.stopIcon,
+                        recordingTime < 1 && { opacity: 0.5 }
+                      ]} />
                     ) : (
                       <View
                         style={[
@@ -350,6 +379,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
+  },
+  recordingHint: {
+    color: 'white',
+    fontSize: 11,
+    marginLeft: 8,
+    opacity: 0.9,
+    fontStyle: 'italic',
   },
   captureContainer: {
     alignItems: 'center',

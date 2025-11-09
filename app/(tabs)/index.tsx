@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, ScrollView, Modal, Animated, Platform, Text, ImageSourcePropType } from 'react-native';
+import { StyleSheet, ScrollView, Modal, Animated, Platform, Text, ImageSourcePropType, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Story } from '@/components/Story';
 import { EventCard } from '@/components/EventCard';
@@ -210,12 +210,13 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <DynamicHeader scrollY={scrollY} onPostPress={handlePostPress} />
-        <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: 100 }}>
-          <SkeletonStory />
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </ScrollView>
+        <FlatList
+          data={[1, 2, 3]} // Dummy data for loading skeletons
+          keyExtractor={(item) => `skeleton-${item}`}
+          ListHeaderComponent={() => <SkeletonStory />}
+          renderItem={() => <SkeletonCard />}
+          contentContainerStyle={{ paddingTop: 100 }}
+        />
       </SafeAreaView>
     );
   }
@@ -227,21 +228,15 @@ export default function HomeScreen() {
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <DynamicHeader scrollY={scrollY} onPostPress={handlePostPress} />
         
-        <Animated.ScrollView 
-          style={styles.content}
-          contentContainerStyle={{ paddingTop: 100 }}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
+        <Animated.FlatList
+          data={displayEvents}
+          keyExtractor={(item: any) => item.id}
+          ListHeaderComponent={() => (
+            <ComponentErrorBoundary componentName="Story">
+              <Story stories={SAMPLE_STORIES} onStoryPress={handleStoryPress} />
+            </ComponentErrorBoundary>
           )}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-        >
-          <ComponentErrorBoundary componentName="Story">
-            <Story stories={SAMPLE_STORIES} onStoryPress={handleStoryPress} />
-          </ComponentErrorBoundary>
-          
-          {displayEvents.map((event: any) => (
+          renderItem={({ item: event }: { item: any }) => (
             <ListItemErrorBoundary key={event.id} itemId={event.id}>
               <EventCard
                 event={event}
@@ -252,8 +247,15 @@ export default function HomeScreen() {
                 onPress={(id) => router.push({ pathname: '/event-details', params: { id } })}
               />
             </ListItemErrorBoundary>
-          ))}
-        </Animated.ScrollView>
+          )}
+          contentContainerStyle={{ paddingTop: 100 }}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        />
 
         {/* Post Modal */}
         <PostModal

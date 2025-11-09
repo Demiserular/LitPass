@@ -31,7 +31,7 @@ const EventCard: React.FC<EventCardProps & { navigation: any }> = ({ event, inde
 
   const handlePress = () => {
     // Navigate to event details screen with event data
-    navigation.navigate('EventDetails', { event });
+    navigation.navigate(' ils', { event });
   };
 
   return (
